@@ -314,6 +314,7 @@ class AIAgent:
         """
         _install_safe_stdio()
 
+        provider_name = provider.strip().lower() if isinstance(provider, str) and provider.strip() else None
         self.model = model
         self.max_iterations = max_iterations
         # Shared iteration budget — parent creates, children inherit.
@@ -332,7 +333,6 @@ class AIAgent:
         # Store effective base URL for feature detection (prompt caching, reasoning, etc.)
         # When no base_url is provided, the client defaults to OpenRouter, so reflect that here.
         self.base_url = base_url or OPENROUTER_BASE_URL
-        provider_name = provider.strip().lower() if isinstance(provider, str) and provider.strip() else None
         self.provider = provider_name or "openrouter"
         if api_mode in {"chat_completions", "codex_responses", "anthropic_messages"}:
             self.api_mode = api_mode
@@ -346,6 +346,12 @@ class AIAgent:
             self.provider = "anthropic"
         else:
             self.api_mode = "chat_completions"
+
+        try:
+            from gauss_cli.models import canonicalize_provider_model
+            self.model = canonicalize_provider_model(self.provider, self.model)
+        except Exception:
+            pass
 
         self.tool_progress_callback = tool_progress_callback
         self.thinking_callback = thinking_callback
@@ -2594,6 +2600,11 @@ class AIAgent:
         fb = self._fallback_model
         fb_provider = (fb.get("provider") or "").strip().lower()
         fb_model = (fb.get("model") or "").strip()
+        try:
+            from gauss_cli.models import canonicalize_provider_model
+            fb_model = canonicalize_provider_model(fb_provider, fb_model)
+        except Exception:
+            pass
         if not fb_provider or not fb_model:
             return False
 

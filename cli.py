@@ -4255,6 +4255,7 @@ class GaussCLI:
             if len(parts) > 1:
                 from gauss_cli.auth import resolve_provider
                 from gauss_cli.models import (
+                    canonicalize_provider_model,
                     parse_model_input,
                     validate_requested_model,
                     _PROVIDER_LABELS,
@@ -4271,6 +4272,7 @@ class GaussCLI:
                     detected = detect_provider_for_model(new_model, current_provider)
                     if detected:
                         target_provider, new_model = detected
+                new_model = canonicalize_provider_model(target_provider, new_model)
                 provider_changed = target_provider != current_provider
 
                 # If provider is changing, re-resolve credentials for the new provider

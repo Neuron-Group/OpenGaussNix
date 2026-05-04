@@ -111,6 +111,8 @@ _PROVIDER_ALIASES = {
     "deep-seek": "deepseek",
 }
 
+_PROVIDER_MODEL_ALIASES: dict[str, dict[str, str]] = {}
+
 
 def model_ids() -> list[str]:
     """Return just the OpenRouter model-id strings."""
@@ -131,6 +133,38 @@ _KNOWN_PROVIDER_NAMES: set[str] = (
     | set(_PROVIDER_ALIASES.keys())
     | {"openrouter", "custom"}
 )
+
+
+def _known_custom_provider_names() -> set[str]:
+    """Return configured custom provider names accepted by ``provider:model``.
+
+    Runtime resolution already supports named custom providers from
+    ``config.yaml`` via ``custom_providers``. Keep `/model` parsing aligned so
+    inputs like ``xiaomi:mimo-v2-5-pro`` are treated as provider switches.
+    """
+    try:
+        from gauss_cli.config import load_config
+
+        config = load_config()
+    except Exception:
+        return set()
+
+    custom_providers = config.get("custom_providers") if isinstance(config, dict) else None
+    if not isinstance(custom_providers, list):
+        return set()
+
+    names: set[str] = set()
+    for entry in custom_providers:
+        if not isinstance(entry, dict):
+            continue
+        raw_name = entry.get("name")
+        if not isinstance(raw_name, str):
+            continue
+        normalized = raw_name.strip().lower().replace(" ", "-")
+        if normalized:
+            names.add(normalized)
+            names.add(f"custom:{normalized}")
+    return names
 
 
 def list_available_providers() -> list[dict[str, str]]:
@@ -192,7 +226,8 @@ def parse_model_input(raw: str, current_provider: str) -> tuple[str, str]:
     if colon > 0:
         provider_part = stripped[:colon].strip().lower()
         model_part = stripped[colon + 1:].strip()
-        if provider_part and model_part and provider_part in _KNOWN_PROVIDER_NAMES:
+        valid_provider_names = _KNOWN_PROVIDER_NAMES | _known_custom_provider_names()
+        if provider_part and model_part and provider_part in valid_provider_names:
             return (normalize_provider(provider_part), model_part)
     return (current_provider, stripped)
 
@@ -373,6 +408,30 @@ def provider_model_ids(provider: Optional[str]) -> list[str]:
         if live:
             return live
     return list(_PROVIDER_MODELS.get(normalized, []))
+
+
+def canonicalize_provider_model(provider: Optional[str], model_name: Optional[str]) -> str:
+    """Normalize known provider-specific model aliases to canonical IDs.
+
+    This keeps old or loosely formatted slugs working across CLI config,
+    setup flows, and direct runtime initialization.
+    """
+    requested = str(model_name or "").strip()
+    if not requested:
+        return requested
+
+    normalized = normalize_provider(provider)
+
+    alias_map = _PROVIDER_MODEL_ALIASES.get(normalized, {})
+    alias_hit = alias_map.get(requested.lower())
+    if alias_hit:
+        return alias_hit
+
+    for candidate in provider_model_ids(normalized):
+        if requested.lower() == candidate.lower():
+            return candidate
+
+    return requested
 
 
 def _fetch_anthropic_models(timeout: float = 5.0) -> Optional[list[str]]:

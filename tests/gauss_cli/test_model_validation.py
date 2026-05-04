@@ -3,6 +3,7 @@
 from unittest.mock import patch
 
 from gauss_cli.models import (
+    canonicalize_provider_model,
     curated_models_for_provider,
     fetch_api_models,
     normalize_provider,
@@ -83,6 +84,19 @@ class TestParseModelInput:
         assert provider == "openrouter"
         assert model == "anthropic/claude-3.5-sonnet:beta"
 
+    def test_named_custom_provider_from_config_is_treated_as_provider(self):
+        with patch(
+            "gauss_cli.config.load_config",
+            return_value={
+                "custom_providers": [
+                    {"name": "Xiaomi", "base_url": "https://token-plan-sgp.xiaomimimo.com/v1"}
+                ]
+            },
+        ):
+            provider, model = parse_model_input("xiaomi:mimo-v2-5-pro", "openrouter")
+        assert provider == "xiaomi"
+        assert model == "mimo-v2-5-pro"
+
     def test_http_url_not_treated_as_provider(self):
         provider, model = parse_model_input("http://localhost:8080/model", "openrouter")
         assert provider == "openrouter"
@@ -144,6 +158,13 @@ class TestProviderModelIds:
 
     def test_zai_returns_glm_models(self):
         assert "glm-5" in provider_model_ids("zai")
+
+
+# -- canonicalize_provider_model ---------------------------------------------
+
+class TestCanonicalizeProviderModel:
+    def test_unknown_model_is_preserved(self):
+        assert canonicalize_provider_model("minimax", "mimo-v2-5-pro") == "mimo-v2-5-pro"
 
 
 # -- fetch_api_models --------------------------------------------------------
