@@ -68,6 +68,46 @@ def test_resolve_runtime_provider_openrouter_ignores_codex_config_base_url(monke
     assert resolved["base_url"] == rp.OPENROUTER_BASE_URL
 
 
+def test_resolve_runtime_provider_anthropic_honors_env_base_url(monkeypatch):
+    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "anthropic")
+    monkeypatch.setattr(rp, "_get_model_config", lambda: {})
+    monkeypatch.setenv("ANTHROPIC_BASE_URL", "https://token-plan-sgp.xiaomimimo.com/anthropic/")
+    monkeypatch.setattr(
+        "agent.anthropic_adapter.resolve_anthropic_token",
+        lambda: "mimo-key",
+    )
+
+    resolved = rp.resolve_runtime_provider(requested="anthropic")
+
+    assert resolved["provider"] == "anthropic"
+    assert resolved["api_mode"] == "anthropic_messages"
+    assert resolved["base_url"] == "https://token-plan-sgp.xiaomimimo.com/anthropic"
+    assert resolved["api_key"] == "mimo-key"
+
+
+def test_resolve_runtime_provider_anthropic_honors_config_base_url(monkeypatch):
+    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "anthropic")
+    monkeypatch.setattr(
+        rp,
+        "_get_model_config",
+        lambda: {
+            "default": "anthropic/claude-opus-4.6",
+            "provider": "anthropic",
+            "base_url": "https://token-plan-sgp.xiaomimimo.com/anthropic/",
+        },
+    )
+    monkeypatch.delenv("ANTHROPIC_BASE_URL", raising=False)
+    monkeypatch.setattr(
+        "agent.anthropic_adapter.resolve_anthropic_token",
+        lambda: "mimo-key",
+    )
+
+    resolved = rp.resolve_runtime_provider(requested="auto")
+
+    assert resolved["provider"] == "anthropic"
+    assert resolved["base_url"] == "https://token-plan-sgp.xiaomimimo.com/anthropic"
+
+
 def test_resolve_runtime_provider_auto_uses_custom_config_base_url(monkeypatch):
     monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "openrouter")
     monkeypatch.setattr(

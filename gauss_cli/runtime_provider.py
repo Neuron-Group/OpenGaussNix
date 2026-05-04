@@ -33,6 +33,33 @@ def _get_model_config() -> Dict[str, Any]:
     return {}
 
 
+def _resolve_anthropic_base_url(
+    *,
+    requested_provider: str,
+    explicit_base_url: Optional[str] = None,
+) -> str:
+    model_cfg = _get_model_config()
+    cfg_base_url = model_cfg.get("base_url") if isinstance(model_cfg.get("base_url"), str) else ""
+    cfg_provider = model_cfg.get("provider") if isinstance(model_cfg.get("provider"), str) else ""
+    requested_norm = (requested_provider or "").strip().lower()
+    cfg_provider = cfg_provider.strip().lower()
+
+    env_base_url = os.getenv("ANTHROPIC_BASE_URL", "").strip()
+    if explicit_base_url and explicit_base_url.strip():
+        return explicit_base_url.strip().rstrip("/")
+    if env_base_url:
+        return env_base_url.rstrip("/")
+
+    if cfg_base_url.strip():
+        if requested_norm == "anthropic":
+            if not cfg_provider or cfg_provider in {"auto", "anthropic"}:
+                return cfg_base_url.strip().rstrip("/")
+        elif requested_norm == "auto" and cfg_provider == "anthropic":
+            return cfg_base_url.strip().rstrip("/")
+
+    return "https://api.anthropic.com"
+
+
 def resolve_requested_provider(requested: Optional[str] = None) -> str:
     """Resolve provider request from explicit arg, config, then env."""
     if requested and requested.strip():
@@ -260,10 +287,14 @@ def resolve_runtime_provider(
                 "No Anthropic credentials found. Set ANTHROPIC_TOKEN or ANTHROPIC_API_KEY, "
                 "run 'claude setup-token', or authenticate with 'claude /login'."
             )
+        base_url = _resolve_anthropic_base_url(
+            requested_provider=requested_provider,
+            explicit_base_url=explicit_base_url,
+        )
         return {
             "provider": "anthropic",
             "api_mode": "anthropic_messages",
-            "base_url": "https://api.anthropic.com",
+            "base_url": base_url,
             "api_key": token,
             "source": "env",
             "requested_provider": requested_provider,
