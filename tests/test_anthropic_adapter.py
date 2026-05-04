@@ -754,6 +754,17 @@ class TestBuildAnthropicKwargs:
         )
         assert kwargs["model"] == "claude-sonnet-4-20250514"
 
+    def test_preserves_xiaomi_model_dots_for_xiaomi_base_url(self):
+        kwargs = build_anthropic_kwargs(
+            model="mimo-v2.5-pro",
+            messages=[{"role": "user", "content": "Hi"}],
+            tools=None,
+            max_tokens=4096,
+            reasoning_config=None,
+            base_url="https://token-plan-sgp.xiaomimimo.com/anthropic",
+        )
+        assert kwargs["model"] == "mimo-v2.5-pro"
+
     def test_reasoning_config_maps_to_manual_thinking_for_pre_4_6_models(self):
         kwargs = build_anthropic_kwargs(
             model="claude-sonnet-4-20250514",

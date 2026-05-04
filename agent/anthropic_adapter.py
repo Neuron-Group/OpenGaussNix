@@ -391,7 +391,7 @@ def run_oauth_setup_token() -> Optional[str]:
 # ---------------------------------------------------------------------------
 
 
-def normalize_model_name(model: str) -> str:
+def normalize_model_name(model: str, base_url: str = None) -> str:
     """Normalize a model name for the Anthropic API.
 
     - Strips 'anthropic/' prefix (OpenRouter format, case-insensitive)
@@ -400,10 +400,11 @@ def normalize_model_name(model: str) -> str:
     """
     lower = model.lower()
     if lower.startswith("anthropic/"):
-        model = model[len("anthropic/"):]
-    # OpenRouter uses dots for version separators (claude-opus-4.6),
-    # Anthropic uses hyphens (claude-opus-4-6). Convert dots to hyphens.
-    model = model.replace(".", "-")
+        model = model[len("anthropic/"):] 
+    if not (base_url and "xiaomimimo.com" in base_url.lower()):
+        # OpenRouter uses dots for version separators (claude-opus-4.6),
+        # Anthropic uses hyphens (claude-opus-4-6). Convert dots to hyphens.
+        model = model.replace(".", "-")
     return model
 
 
@@ -714,12 +715,13 @@ def build_anthropic_kwargs(
     max_tokens: Optional[int],
     reasoning_config: Optional[Dict[str, Any]],
     tool_choice: Optional[str] = None,
+    base_url: str = None,
 ) -> Dict[str, Any]:
     """Build kwargs for anthropic.messages.create()."""
     system, anthropic_messages = convert_messages_to_anthropic(messages)
     anthropic_tools = convert_tools_to_anthropic(tools) if tools else []
 
-    model = normalize_model_name(model)
+    model = normalize_model_name(model, base_url=base_url)
     effective_max_tokens = max_tokens or 16384
 
     kwargs: Dict[str, Any] = {

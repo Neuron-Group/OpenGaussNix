@@ -351,6 +351,7 @@ class _AnthropicCompletionsAdapter:
             max_tokens=max_tokens,
             reasoning_config=None,
             tool_choice=normalized_tool_choice,
+            base_url=getattr(client, 'base_url', None),
         )
         if temperature is not None:
             anthropic_kwargs["temperature"] = temperature

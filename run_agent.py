@@ -2828,6 +2828,7 @@ class AIAgent:
                 tools=self.tools,
                 max_tokens=self.max_tokens,
                 reasoning_config=self.reasoning_config,
+                base_url=self._anthropic_base_url,
             )
 
         if self.api_mode == "codex_responses":
