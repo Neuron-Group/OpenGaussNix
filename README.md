@@ -38,7 +38,7 @@ If you are not already comfortable with OpenGauss, read the [Start Here guide](w
 ### macOS and Linux
 
 ```bash
-git clone https://github.com/math-inc/OpenGauss.git
+git clone https://github.com/Neuron-Group/OpenGaussNix.git
 cd OpenGauss
 ./scripts/install.sh
 ```
@@ -89,7 +89,7 @@ You can also install manually inside WSL:
 
 ```bash
 wsl
-git clone https://github.com/math-inc/OpenGauss.git ~/OpenGauss
+git clone https://github.com/Neuron-Group/OpenGaussNix.git ~/OpenGaussNix
 cd ~/OpenGauss
 ./scripts/install.sh
 ```
@@ -170,7 +170,7 @@ can be generated directly from Nix instead of being edited manually.
 
 ```nix
 {
-  inputs.opengauss.url = "path:/path/to/OpenGaussNix";
+  inputs.opengauss.url = "github:Neuron-Group/OpenGaussNix";
 
   outputs = { self, nixpkgs, home-manager, opengauss, ... }: {
     homeConfigurations.me = home-manager.lib.homeManagerConfiguration {

@@ -108,7 +108,7 @@ buildPythonApplication rec {
 
   meta = {
     description = "Open Gauss Lean workflow orchestrator";
-    homepage = "https://github.com/Mathlib/OpenGauss";
+    homepage = "https://github.com/Neuron-Group/OpenGaussNix";
     mainProgram = "gauss";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
