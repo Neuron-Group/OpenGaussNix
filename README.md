@@ -137,6 +137,71 @@ gauss
 /prove                        # Start proving
 ```
 
+## Nix flake
+
+This repo now includes a Nix flake with:
+
+- `packages.default` / `packages.opengauss` — the packaged CLI
+- `packages.opengauss-with-claude` — the CLI wrapped with `claude-code` on `PATH`
+- `apps.default` — `nix run`
+- `devShells.default` — Python + `uv` + `ripgrep` + `lean4`
+- `devShells.withClaude` — the same shell plus `claude-code`
+- `homeManagerModules.default` — declarative user config generation
+
+Examples:
+
+```bash
+nix build .#opengauss
+nix run .#gauss -- version
+nix develop .#default
+```
+
+Because `claude-code` is unfree in nixpkgs, it is exposed separately:
+
+```bash
+NIXPKGS_ALLOW_UNFREE=1 nix build --impure .#opengauss-with-claude
+NIXPKGS_ALLOW_UNFREE=1 nix develop --impure .#withClaude
+```
+
+### Home Manager
+
+The flake exposes a Home Manager module so Gauss' `config.yaml` and `.env`
+can be generated directly from Nix instead of being edited manually.
+
+```nix
+{
+  inputs.opengauss.url = "path:/path/to/OpenGaussNix";
+
+  outputs = { self, nixpkgs, home-manager, opengauss, ... }: {
+    homeConfigurations.me = home-manager.lib.homeManagerConfiguration {
+      pkgs = import nixpkgs { system = "x86_64-linux"; };
+      modules = [
+        opengauss.homeManagerModules.default
+        {
+          programs.opengauss = {
+            enable = true;
+            withClaudeCode = true;
+
+            settings = {
+              gauss.autoformalize.backend = "claude-code";
+              gauss.autoformalize.auth_mode = "api-key";
+              model = "anthropic/claude-sonnet-4";
+              terminal.backend = "local";
+            };
+
+            environment = {
+              ANTHROPIC_API_KEY = "...";
+            };
+          };
+        }
+      ];
+    };
+  };
+}
+```
+
+If you enable `withClaudeCode`, remember to allow unfree packages in your Nixpkgs config.
+
 ## The core loop
 
 1. Start the CLI with `gauss`

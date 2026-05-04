@@ -86,7 +86,7 @@ gauss-agent = "run_agent:main"
 gauss-acp = "acp_adapter.entry:main"
 
 [tool.setuptools]
-py-modules = ["run_agent", "model_tools", "toolsets", "batch_runner", "trajectory_compressor", "toolset_distributions", "cli", "gauss_constants", "gauss_state", "gauss_time", "mini_swe_runner", "rl_cli", "utils"]
+py-modules = ["run_agent", "model_tools", "toolsets", "batch_runner", "trajectory_compressor", "toolset_distributions", "cli", "gauss_constants", "gauss_state", "gauss_time", "mini_swe_runner", "minisweagent_path", "rl_cli", "swarm_manager", "utils"]
 
 [tool.setuptools.packages.find]
 include = ["agent", "tools", "tools.*", "gauss_cli", "gateway", "gateway.*", "cron", "acp_adapter"]
